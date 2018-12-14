@@ -1,0 +1,51 @@
+{
+  "variables": {
+    "cloud_token": null,
+    "mysql_5_7_root_password": null,
+    "mysql_5_7_user_password": null
+  },
+  "builders": [
+    {
+      "type": "vagrant",
+      "box_name": "futureys/centos-7",
+      "box_provider": "virtualbox",
+      "box_file": ".ovf",
+      "builder": {
+        "type": "virtualbox-ovf",
+        "headless": true,
+        "ssh_username": "vagrant",
+        "ssh_password": "vagrant",
+        "ssh_pty": true,
+        "shutdown_command": "echo '/sbin/halt -h -p' > /tmp/shutdown.sh; echo 'vagrant'|sudo -S sh '/tmp/shutdown.sh'",
+        "guest_additions_mode": "disable"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible-local",
+      "playbook_file": "playbook_dummy.yml",
+      "playbook_dir": "./",
+      "staging_directory": "/tmp/packer-provisioner-ansible-local"
+    },{
+      "type": "shell",
+      "inline": [
+        "cd /tmp/packer-provisioner-ansible-local; ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ansible-playbook playbook.yml -vvv -c local -i inventories/development --extra-vars '{ \"mysql_5_7_root_password\": \"{{user `mysql_5_7_root_password`}}\", \"mysql_5_7_user_password\": \"{{user `mysql_5_7_user_password`}}\" }'",
+        "sudo rm -rf /tmp/*"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "vagrant",
+        "compression_level": 8
+      },{
+        "type": "vagrant-cloud",
+        "box_tag": "futureys/rails",
+        "access_token": "{{user `cloud_token`}}",
+        "version": "201812.14.0"
+      }
+    ]
+  ]
+}

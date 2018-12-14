@@ -1,0 +1,9 @@
+---
+- hosts: default
+  become: yes
+  roles:
+    - role: ansible-role-mysql5.7-amazon-linux
+    - role: ansible-role-ruby-amazon-linux
+    - role: ansible-role-cleaning-amazon-linux
+      tags:
+        - cleaning
